@@ -1,8 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { GestureHandlerRootView, Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -37,34 +36,28 @@ export default function DashboardScreen() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GestureDetector gesture={panGesture}>
         <View style={{ flex: 1 }}>
-          <ParallaxScrollView
-            headerBackgroundColor={{
-              light: Colors.light.primary,
-              dark: Colors.dark.primary
-            }}
-            headerImage={
-              <IconSymbol
-                size={310}
-                color={colorScheme === 'light' ? '#3B8C3F' : '#4E8C52'}
-                name="dollarsign.circle"
-                style={styles.headerImage}
-              />
-            }>
-            <ThemedView style={styles.container}>
-              <ThemedView style={styles.titleContainer}>
-                <ThemedText type="title">Dashboard</ThemedText>
+          <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.contentContainer}
+            >
+              <ThemedView style={styles.container}>
+                <ThemedView style={styles.titleContainer}>
+                  <ThemedText type="title">Dashboard</ThemedText>
+                </ThemedView>
+
+                <BalanceSummary />
+
+                <SpendingOverview />
+
+                <ThemedView style={styles.sectionContainer}>
+                  <ThemedText type="subtitle">Recent Transactions</ThemedText>
+                  <RecentTransactions />
+                </ThemedView>
               </ThemedView>
+            </ScrollView>
+          </SafeAreaView>
 
-              <BalanceSummary />
-
-              <SpendingOverview />
-
-              <ThemedView style={styles.sectionContainer}>
-                <ThemedText type="subtitle">Recent Transactions</ThemedText>
-                <RecentTransactions />
-              </ThemedView>
-            </ThemedView>
-          </ParallaxScrollView>
 
           <TouchableOpacity
             style={[styles.cameraButton, { backgroundColor: colors.primary }]}
@@ -79,6 +72,12 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 16,
+  },
   container: {
     gap: 24,
   },

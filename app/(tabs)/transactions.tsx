@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -9,43 +9,43 @@ import { RecentTransactions } from '@/components/dashboard/RecentTransactions';
 
 export default function TransactionsScreen() {
     const colorScheme = useColorScheme() ?? 'light';
+    const colors = Colors[colorScheme];
 
     return (
-        <ParallaxScrollView
-            headerBackgroundColor={{
-                light: Colors.light.secondary,
-                dark: Colors.dark.secondary
-            }}
-            headerImage={
-                <IconSymbol
-                    size={310}
-                    color={colorScheme === 'light' ? '#1976D2' : '#2F80ED'}
-                    name="list.bullet"
-                    style={styles.headerImage}
-                />
-            }>
-            <ThemedView style={styles.container}>
-                <ThemedView style={styles.titleContainer}>
-                    <ThemedText type="title">Transactions</ThemedText>
-                </ThemedView>
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.contentContainer}
+            >
+                <ThemedView style={styles.container}>
+                    <ThemedView style={styles.titleContainer}>
+                        <ThemedText type="title">Transactions</ThemedText>
+                    </ThemedView>
 
-                {/* Will be expanded with transaction filtering options */}
-                <ThemedView style={styles.filtersContainer}>
-                    <ThemedText>All transactions</ThemedText>
-                </ThemedView>
+                    {/* Will be expanded with transaction filtering options */}
+                    <ThemedView style={styles.filtersContainer}>
+                        <ThemedText>All transactions</ThemedText>
+                    </ThemedView>
 
-                <RecentTransactions />
+                    <RecentTransactions />
 
-                {/* Placeholder for "Load More" functionality */}
-                <ThemedView style={styles.loadMoreContainer}>
-                    <ThemedText style={styles.loadMoreText}>Load more transactions</ThemedText>
+                    {/* Placeholder for "Load More" functionality */}
+                    <ThemedView style={styles.loadMoreContainer}>
+                        <ThemedText style={styles.loadMoreText}>Load more transactions</ThemedText>
+                    </ThemedView>
                 </ThemedView>
-            </ThemedView>
-        </ParallaxScrollView>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    scrollView: {
+        flex: 1,
+    },
+    contentContainer: {
+        padding: 16,
+    },
     container: {
         gap: 24,
     },

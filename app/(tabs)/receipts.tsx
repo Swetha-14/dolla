@@ -1,14 +1,13 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-export default function ReceiptsScreen() {
+export default function AddExpenseScreen() {
     const colorScheme = useColorScheme() ?? 'light';
     const colors = Colors[colorScheme];
     const router = useRouter();
@@ -17,101 +16,114 @@ export default function ReceiptsScreen() {
         router.push('/simple-camera');
     };
 
+    const openManualEntry = () => {
+        router.push('/manual-entry');
+    };
+
     return (
-        <ParallaxScrollView
-            headerBackgroundColor={{
-                light: Colors.light.accent,
-                dark: Colors.dark.accent
-            }}
-            headerImage={
-                <IconSymbol
-                    size={310}
-                    color={colorScheme === 'light' ? '#E68900' : '#FFB74D'}
-                    name="doc.text.viewfinder"
-                    style={styles.headerImage}
-                />
-            }>
-            <ThemedView style={styles.container}>
-                <ThemedView style={styles.titleContainer}>
-                    <ThemedText type="title">Receipts</ThemedText>
-                </ThemedView>
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.contentContainer}
+            >
+                <ThemedView style={styles.container}>
+                    <ThemedView style={styles.titleContainer}>
+                        <ThemedText type="title">Add Expense</ThemedText>
+                    </ThemedView>
 
-                <ThemedView style={[styles.scanContainer, { borderColor: colors.border }]}>
-                    <ThemedText style={styles.scanTitle}>Scan a Receipt</ThemedText>
-                    <ThemedText style={styles.scanDescription}>
-                        Take a photo of your receipt to automatically track your expenses at item-level detail
-                    </ThemedText>
+                    <ThemedView style={styles.cardsContainer}>
+                        {/* Scan Receipt Card */}
+                        <TouchableOpacity
+                            style={[styles.card, { borderColor: colors.border }]}
+                            onPress={openSimpleCamera}
+                        >
+                            <View style={[styles.iconContainer, { backgroundColor: colors.primary }]}>
+                                <IconSymbol name="camera.fill" size={32} color="#FFFFFF" />
+                            </View>
+                            <ThemedText style={styles.cardTitle}>Scan Receipt</ThemedText>
+                            <ThemedText style={styles.cardDescription}>
+                                Take a photo to auto-track expenses
+                            </ThemedText>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity
-                        style={[styles.scanButton, { backgroundColor: colors.primary }]}
-                        onPress={openSimpleCamera}
-                    >
-                        <IconSymbol name="camera.fill" size={24} color="#FFFFFF" />
-                        <ThemedText style={styles.buttonText}>Scan Receipt</ThemedText>
-                    </TouchableOpacity>
-                </ThemedView>
+                        {/* Manual Entry Card */}
+                        <TouchableOpacity
+                            style={[styles.card, { borderColor: colors.border }]}
+                            onPress={openManualEntry}
+                        >
+                            <View style={[styles.iconContainer, { backgroundColor: colors.secondary }]}>
+                                <IconSymbol name="pencil" size={32} color="#FFFFFF" />
+                            </View>
+                            <ThemedText style={styles.cardTitle}>Manual Entry</ThemedText>
+                            <ThemedText style={styles.cardDescription}>
+                                Enter expense details manually
+                            </ThemedText>
+                        </TouchableOpacity>
+                    </ThemedView>
 
-                <ThemedView>
-                    <ThemedText type="subtitle">Recent Receipts</ThemedText>
+                    <ThemedView>
+                        <ThemedText type="subtitle">Recent Expenses</ThemedText>
 
-                    <ThemedView style={[styles.emptyState, { borderColor: colors.border }]}>
-                        <IconSymbol
-                            name="doc.text.magnifyingglass"
-                            size={48}
-                            color={colors.border}
-                        />
-                        <ThemedText style={styles.emptyStateText}>
-                            Your scanned receipts will appear here
-                        </ThemedText>
+                        <ThemedView style={[styles.emptyState, { borderColor: colors.border }]}>
+                            <IconSymbol
+                                name="doc.text.magnifyingglass"
+                                size={48}
+                                color={colors.border}
+                            />
+                            <ThemedText style={styles.emptyStateText}>
+                                Your recent expenses will appear here
+                            </ThemedText>
+                        </ThemedView>
                     </ThemedView>
                 </ThemedView>
-            </ThemedView>
-        </ParallaxScrollView>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    scrollView: {
+        flex: 1,
+    },
+    contentContainer: {
+        padding: 16,
+    },
     container: {
         gap: 24,
-    },
-    headerImage: {
-        bottom: -90,
-        left: -35,
-        position: 'absolute',
     },
     titleContainer: {
         flexDirection: 'row',
         gap: 8,
         marginBottom: 8,
     },
-    scanContainer: {
-        padding: 20,
+    cardsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    card: {
+        flex: 1,
+        padding: 16,
         borderRadius: 12,
         borderWidth: 1,
         alignItems: 'center',
         gap: 12,
     },
-    scanTitle: {
-        fontSize: 20,
+    iconContainer: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    cardTitle: {
+        fontSize: 18,
         fontWeight: 'bold',
     },
-    scanDescription: {
+    cardDescription: {
+        fontSize: 14,
         textAlign: 'center',
-        marginBottom: 8,
-    },
-    scanButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 16,
-        borderRadius: 12,
-        width: '100%',
-        gap: 8,
-    },
-    buttonText: {
-        color: '#FFFFFF',
-        fontWeight: '600',
-        fontSize: 16,
+        opacity: 0.7,
     },
     emptyState: {
         marginTop: 16,

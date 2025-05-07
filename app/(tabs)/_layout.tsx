@@ -30,21 +30,21 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.pie.fill" color={color} />,
         }}
       />
       <Tabs.Screen
         name="transactions"
         options={{
-          title: 'Transactions',
+          title: 'My Spending',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet" color={color} />,
         }}
       />
       <Tabs.Screen
         name="receipts"
         options={{
-          title: 'Receipts',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="doc.text.viewfinder" color={color} />,
+          title: 'Add Expense',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="plus.circle.fill" color={color} />,
         }}
       />
       <Tabs.Screen
