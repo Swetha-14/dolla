@@ -1,16 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
+// Define an interface for the expense data
+interface Expense {
+    id: string;
+    amount: number;
+    merchant: string;
+    note: string;
+    category: string;
+    categoryIcon: string;
+    date: Date | string; // Allow both Date object and string format
+    type: string;
+}
+
 export default function AddExpenseScreen() {
+    const [expenses, setExpenses] = useState<Expense[]>([]);
     const colorScheme = useColorScheme() ?? 'light';
     const colors = Colors[colorScheme];
     const router = useRouter();
+    const params = useLocalSearchParams();
+
+    // Handle new expense data from params
+    useEffect(() => {
+        if (params.newExpense) {
+            try {
+                // Parse the expense data if it's a string
+                const expenseData = typeof params.newExpense === 'string'
+                    ? JSON.parse(params.newExpense)
+                    : params.newExpense;
+
+                // Add the new expense to the list
+                setExpenses(prevExpenses => [expenseData, ...prevExpenses]);
+            } catch (error) {
+                console.error('Error processing expense data:', error);
+            }
+        }
+    }, [params.newExpense]);
 
     const openSimpleCamera = () => {
         router.push('/simple-camera');
@@ -64,16 +95,47 @@ export default function AddExpenseScreen() {
                     <ThemedView>
                         <ThemedText type="subtitle">Recent Expenses</ThemedText>
 
-                        <ThemedView style={[styles.emptyState, { borderColor: colors.border }]}>
-                            <IconSymbol
-                                name="doc.text.magnifyingglass"
-                                size={48}
-                                color={colors.border}
-                            />
-                            <ThemedText style={styles.emptyStateText}>
-                                Your recent expenses will appear here
-                            </ThemedText>
-                        </ThemedView>
+                        {expenses.length > 0 ? (
+                            <View style={styles.expensesList}>
+                                {expenses.map((expense) => (
+                                    <ThemedView
+                                        key={expense.id}
+                                        style={[styles.expenseItem, { borderColor: colors.border }]}
+                                    >
+                                        <View style={styles.expenseLeft}>
+                                            <View style={[styles.categoryIconContainer, { backgroundColor: colors.primary }]}>
+                                                <IconSymbol name={expense.categoryIcon} size={20} color="#FFFFFF" />
+                                            </View>
+                                            <View>
+                                                <ThemedText style={styles.merchantName}>{expense.merchant}</ThemedText>
+                                                <View style={styles.expenseDetails}>
+                                                    <ThemedText style={styles.categoryText}>{expense.category}</ThemedText>
+                                                    {expense.type === 'manual' && (
+                                                        <View style={[styles.badge, { backgroundColor: colors.secondary }]}>
+                                                            <ThemedText style={styles.badgeText}>manual</ThemedText>
+                                                        </View>
+                                                    )}
+                                                </View>
+                                            </View>
+                                        </View>
+                                        <ThemedText style={[styles.expenseAmount, { color: colors.error }]}>
+                                            -${expense.amount.toFixed(2)}
+                                        </ThemedText>
+                                    </ThemedView>
+                                ))}
+                            </View>
+                        ) : (
+                            <ThemedView style={[styles.emptyState, { borderColor: colors.border }]}>
+                                <IconSymbol
+                                    name="doc.text.magnifyingglass"
+                                    size={48}
+                                    color={colors.border}
+                                />
+                                <ThemedText style={styles.emptyStateText}>
+                                    Your recent expenses will appear here
+                                </ThemedText>
+                            </ThemedView>
+                        )}
                     </ThemedView>
                 </ThemedView>
             </ScrollView>
@@ -138,5 +200,57 @@ const styles = StyleSheet.create({
     emptyStateText: {
         opacity: 0.6,
         textAlign: 'center',
-    }
+    },
+    expensesList: {
+        marginTop: 12,
+        gap: 8,
+    },
+    expenseItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 12,
+        borderWidth: 1,
+    },
+    expenseLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    categoryIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    merchantName: {
+        fontWeight: '500',
+        fontSize: 16,
+    },
+    expenseDetails: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 2,
+    },
+    categoryText: {
+        fontSize: 14,
+        opacity: 0.7,
+    },
+    badge: {
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    badgeText: {
+        color: '#FFFFFF',
+        fontSize: 10,
+        fontWeight: '500',
+    },
+    expenseAmount: {
+        fontWeight: '600',
+        fontSize: 16,
+    },
 });
