@@ -8,7 +8,6 @@ import {
     View,
     Modal,
     Animated,
-    Keyboard,
     Platform,
     Alert
 } from 'react-native';
@@ -34,6 +33,15 @@ const defaultCategories = [
     { id: '4', name: 'bills', icon: 'doc.text.fill' },
     { id: '5', name: 'entertainment', icon: 'tv.fill' },
     { id: 'new', name: 'add new', icon: 'plus.circle.fill' }
+];
+
+const paymentMethods = [
+    { id: 'cash', name: 'Cash', icon: 'dollarsign.circle.fill' },
+    { id: 'credit', name: 'Credit Card', icon: 'creditcard.fill' },
+    { id: 'debit', name: 'Debit Card', icon: 'creditcard.fill' },
+    { id: 'venmo', name: 'Venmo', icon: 'v.circle.fill' },
+    { id: 'zelle', name: 'Zelle', icon: 'z.circle.fill' },
+    { id: 'other', name: 'Other', icon: 'ellipsis.circle.fill' }
 ];
 
 // Icons for category selection
@@ -102,6 +110,8 @@ export default function ManualEntryScreen() {
     const [selectedIcon, setSelectedIcon] = useState(categoryIcons[0].id);
     const [toastVisible, setToastVisible] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+    const [showPaymentMethodPicker, setShowPaymentMethodPicker] = useState(false);
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash'); // Default to Cash
 
     // Show toast message
     const showToast = (message: any) => {
@@ -165,7 +175,17 @@ export default function ManualEntryScreen() {
     const changeDate = (days: any) => {
         const newDate = new Date(selectedDate);
         newDate.setDate(newDate.getDate() + days);
-        setSelectedDate(newDate);
+
+        // Don't allow future dates
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+
+        const proposedDate = new Date(newDate);
+        proposedDate.setHours(0, 0, 0, 0); // Reset time for comparison
+
+        if (proposedDate <= today) {
+            setSelectedDate(newDate);
+        }
     };
 
     // Validate form before saving
@@ -205,6 +225,7 @@ export default function ManualEntryScreen() {
             note,
             category: selectedCategoryObj.name,
             categoryIcon: selectedCategoryObj.icon,
+            paymentMethod: selectedPaymentMethod,
             date: selectedDate,
             type: 'manual'
         };
@@ -313,6 +334,21 @@ export default function ManualEntryScreen() {
                         </ScrollView>
                     </ThemedView>
 
+                    {/* Payment Method */}
+                    <ThemedView style={styles.sectionContainer}>
+                        <ThemedText type="subtitle">Payment Method</ThemedText>
+                        <ThemedView style={[styles.textInputContainer, { borderColor: colors.border }]}>
+                            <IconSymbol name="creditcard.fill" size={20} color={colors.text} />
+                            <TouchableOpacity
+                                style={styles.dropdownButton}
+                                onPress={() => setShowPaymentMethodPicker(!showPaymentMethodPicker)}
+                            >
+                                <ThemedText>{paymentMethods.find(p => p.id === selectedPaymentMethod)?.name || 'Cash'}</ThemedText>
+                                <IconSymbol name="chevron.down" size={16} color={colors.text} />
+                            </TouchableOpacity>
+                        </ThemedView>
+                    </ThemedView>
+
                     {/* Notes Input */}
                     <ThemedView style={[styles.noteContainer, { borderColor: colors.border }]}>
                         <IconSymbol name="text.bubble" size={20} color={colors.text} />
@@ -349,8 +385,15 @@ export default function ManualEntryScreen() {
                                 {selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                             </ThemedText>
 
-                            <TouchableOpacity onPress={() => changeDate(1)}>
-                                <IconSymbol name="chevron.right" size={24} color={colors.text} />
+                            <TouchableOpacity
+                                onPress={() => changeDate(1)}
+                                disabled={selectedDate.toDateString() === new Date().toDateString()}
+                            >
+                                <IconSymbol
+                                    name="chevron.right"
+                                    size={24}
+                                    color={selectedDate.toDateString() === new Date().toDateString() ? colors.border : colors.text}
+                                />
                             </TouchableOpacity>
                         </ThemedView>
                     )}
@@ -375,7 +418,7 @@ export default function ManualEntryScreen() {
                 <View style={styles.modalOverlay}>
                     <ThemedView style={[styles.modalContent, { backgroundColor: colors.background }]}>
                         <View style={styles.modalHeader}>
-                            <ThemedText type="title">New Category</ThemedText>
+                            <ThemedText type="title" style={{ fontSize: 26 }}>New Category</ThemedText>
                             <TouchableOpacity onPress={() => setShowNewCategoryModal(false)}>
                                 <IconSymbol name="xmark" size={24} color={colors.text} />
                             </TouchableOpacity>
@@ -421,6 +464,55 @@ export default function ManualEntryScreen() {
                         >
                             <ThemedText style={styles.saveButtonText}>Create Category</ThemedText>
                         </TouchableOpacity>
+                    </ThemedView>
+                </View>
+            </Modal>
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={showPaymentMethodPicker}
+                onRequestClose={() => setShowPaymentMethodPicker(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <ThemedView style={[styles.modalContent, { backgroundColor: colors.background }]}>
+                        <View style={styles.modalHeader}>
+                            <ThemedText type="title" style={{ fontSize: 26 }}>Select Payment Method</ThemedText>
+                            <TouchableOpacity onPress={() => setShowPaymentMethodPicker(false)}>
+                                <IconSymbol name="xmark" size={24} color={colors.text} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.paymentMethodsList}>
+                            {paymentMethods.map((method) => (
+                                <TouchableOpacity
+                                    key={method.id}
+                                    style={[
+                                        styles.paymentMethodItem,
+                                        selectedPaymentMethod === method.id && {
+                                            backgroundColor: colors.primary + '10',
+                                            borderColor: colors.primary,
+                                        },
+                                        { borderColor: colors.border }
+                                    ]}
+                                    onPress={() => {
+                                        setSelectedPaymentMethod(method.id);
+                                        setShowPaymentMethodPicker(false);
+                                    }}
+                                >
+                                    <IconSymbol
+                                        name={method.icon}
+                                        size={24}
+                                        color={selectedPaymentMethod === method.id ? colors.primary : colors.text}
+                                    />
+                                    <ThemedText style={[
+                                        styles.paymentMethodName,
+                                        selectedPaymentMethod === method.id && { color: colors.primary }
+                                    ]}>
+                                        {method.name}
+                                    </ThemedText>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
                     </ThemedView>
                 </View>
             </Modal>
@@ -591,5 +683,26 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(0,0,0,0.05)',
+    },
+    dropdownButton: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flex: 1,
+    },
+    paymentMethodsList: {
+        gap: 12,
+    },
+    paymentMethodItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 12,
+        borderWidth: 1,
+        gap: 12,
+    },
+    paymentMethodName: {
+        fontSize: 16,
+        flex: 1,
     },
 });

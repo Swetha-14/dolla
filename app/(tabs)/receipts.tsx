@@ -6,8 +6,8 @@ import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Define an interface for the expense data
 interface Expense {
     id: string;
     amount: number;
@@ -15,7 +15,8 @@ interface Expense {
     note: string;
     category: string;
     categoryIcon: string;
-    date: Date | string; // Allow both Date object and string format
+    paymentMethod?: string; // Add this line
+    date: Date | string;
     type: string;
 }
 
@@ -26,17 +27,53 @@ export default function AddExpenseScreen() {
     const router = useRouter();
     const params = useLocalSearchParams();
 
+    useEffect(() => {
+        loadExpenses();
+    }, []);
+
+    // Load expenses from storage
+    const loadExpenses = async () => {
+        try {
+            const storedExpenses = await AsyncStorage.getItem('expenses');
+            if (storedExpenses) {
+                const parsedExpenses = JSON.parse(storedExpenses);
+                setExpenses(parsedExpenses);
+                return parsedExpenses;
+            }
+            return [];
+        } catch (error) {
+            console.error('Error loading expenses:', error);
+            return [];
+        }
+    };
+
+    // Save expenses to storage
+    const saveExpenses = async (expensesToSave: Expense[]) => {
+        try {
+            await AsyncStorage.setItem('expenses', JSON.stringify(expensesToSave));
+        } catch (error) {
+            console.error('Error saving expenses:', error);
+        }
+    };
+
     // Handle new expense data from params
     useEffect(() => {
         if (params.newExpense) {
             try {
-                // Parse the expense data if it's a string
                 const expenseData = typeof params.newExpense === 'string'
                     ? JSON.parse(params.newExpense)
                     : params.newExpense;
 
-                // Add the new expense to the list
-                setExpenses(prevExpenses => [expenseData, ...prevExpenses]);
+                // Load existing expenses first
+                loadExpenses().then((existingExpenses) => {
+                    // Check for duplicates
+                    const isDuplicate = existingExpenses.some((exp: { id: any; }) => exp.id === expenseData.id);
+                    if (!isDuplicate) {
+                        const updatedExpenses = [expenseData, ...existingExpenses];
+                        setExpenses(updatedExpenses);
+                        saveExpenses(updatedExpenses); // Save to storage
+                    }
+                });
             } catch (error) {
                 console.error('Error processing expense data:', error);
             }
@@ -103,24 +140,36 @@ export default function AddExpenseScreen() {
                                         style={[styles.expenseItem, { borderColor: colors.border }]}
                                     >
                                         <View style={styles.expenseLeft}>
-                                            <View style={[styles.categoryIconContainer, { backgroundColor: colors.primary }]}>
-                                                <IconSymbol name={expense.categoryIcon} size={20} color="#FFFFFF" />
+                                            <View style={[styles.categoryIconContainer, { backgroundColor: colors.primary + '15' }]}>
+                                                <IconSymbol name={expense.categoryIcon} size={24} color={colors.primary} />
                                             </View>
-                                            <View>
-                                                <ThemedText style={styles.merchantName}>{expense.merchant}</ThemedText>
-                                                <View style={styles.expenseDetails}>
-                                                    <ThemedText style={styles.categoryText}>{expense.category}</ThemedText>
-                                                    {expense.type === 'manual' && (
-                                                        <View style={[styles.badge, { backgroundColor: colors.secondary }]}>
-                                                            <ThemedText style={styles.badgeText}>manual</ThemedText>
-                                                        </View>
-                                                    )}
-                                                </View>
+                                            <View style={styles.expenseInfo}>
+                                                <ThemedText style={[styles.merchantName, { color: colors.text }]}>
+                                                    {expense.merchant}
+                                                </ThemedText>
+                                                <ThemedText style={styles.expenseDate}>
+                                                    {new Date(expense.date).toLocaleDateString('en-US', {
+                                                        month: 'short',
+                                                        day: 'numeric',
+                                                        year: 'numeric'
+                                                    })}
+                                                </ThemedText>
                                             </View>
                                         </View>
-                                        <ThemedText style={[styles.expenseAmount, { color: colors.error }]}>
-                                            -${expense.amount.toFixed(2)}
-                                        </ThemedText>
+                                        <View style={styles.expenseRight}>
+                                            <ThemedText style={[styles.expenseAmount, { color: colors.text }]}>
+                                                ${expense.amount.toFixed(2)}
+                                            </ThemedText>
+                                            <View style={[styles.typeBadge, {
+                                                backgroundColor: expense.type === 'manual' ? colors.secondary + '15' : colors.primary + '15'
+                                            }]}>
+                                                <ThemedText style={[styles.typeBadgeText, {
+                                                    color: expense.type === 'manual' ? colors.secondary : colors.primary
+                                                }]}>
+                                                    {expense.type}
+                                                </ThemedText>
+                                            </View>
+                                        </View>
                                     </ThemedView>
                                 ))}
                             </View>
@@ -209,48 +258,53 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 12,
-        borderRadius: 12,
+        padding: 16,
+        borderRadius: 16,
         borderWidth: 1,
+        marginBottom: 8,
     },
     expenseLeft: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
+        flex: 1,
     },
     categoryIconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
     },
     merchantName: {
-        fontWeight: '500',
-        fontSize: 16,
-    },
-    expenseDetails: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginTop: 2,
-    },
-    categoryText: {
-        fontSize: 14,
-        opacity: 0.7,
-    },
-    badge: {
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
-    },
-    badgeText: {
-        color: '#FFFFFF',
-        fontSize: 10,
-        fontWeight: '500',
+        fontWeight: '600',
+        fontSize: 16
     },
     expenseAmount: {
+        fontWeight: '700',
+        fontSize: 18,
+    },
+    expenseInfo: {
+        flex: 1,
+        gap: 4,
+    },
+    expenseDate: {
+        fontSize: 14,
+        opacity: 0.6,
+    },
+    expenseRight: {
+        alignItems: 'flex-end',
+        gap: 4,
+    },
+    typeBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+    },
+    typeBadgeText: {
+        fontSize: 11,
         fontWeight: '600',
-        fontSize: 16,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
 });
